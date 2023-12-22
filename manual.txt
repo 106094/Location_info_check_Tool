@@ -1,0 +1,31 @@
+【PS1】
+1. 若想在本機執行請copy三個檔案
+ - gpscheck.bat
+ - gpscheck.ps1
+ - failmapping.csv 
+
+不在本機執行也可，在此目錄下執行
+\\192.168.20.20\sto\EO\2_AutoTool\ALL\148.AppleCarPlay_Location_info_check_Tool\
+
+2. 雙擊【gpscheck.bat】或右鍵【gpscheck.ps1】選run with powershell
+3. 出現視窗文字，"請將csv檔案拖曳至此"，將csv檔案拖曳到執行的視窗中後，按Enter
+4. 視窗消失後，會於csv檔同資料夾中產出結果，
+[GPGGA/GPRMC/PASCD]_pass.csv-表示測項無檢出
+[GPGGA/GPRMC/PASCD]_fail.csv-表示測項有fail檢出，filter fail後的資料，請開啟csv檢查
+[GPRMC]_less180_[#max]_[#min].csv-表示GPRMC測項面航向最大值[#max]與最小值[#min]相差180度以下的fail檢出，請開啟[GPRMC]*.csv檢查
+無filter fail的資料，其存成[GPGGA/GPRMC/PASCD].csv
+
+【Python】
+1. 若想在本機執行請安裝python並copy此兩個檔案
+ - gpscheck.py
+ - failmapping.csv 
+
+2. 將要檢查的csv檔置於與gpscheck.py同一層folder
+3. MacBook 進terminal 於工具目錄下執行【python3 gpscheck.py】
+4. return後會於csv檔同資料夾中產出2個folder 【raw】和【results】
+【raw】 folder中會存放原始cvs加日期後綴
+【results】產出如下檔案供tester檢查
+[GPGGA/GPRMC/PASCD]_pass.csv-表示測項無檢出
+[GPGGA/GPRMC/PASCD]_fail.csv-表示測項有fail檢出，filter fail後的資料，請開啟csv檢查
+[GPRMC]_less180_[#max]_[#min].csv-表示GPRMC測項面航向最大值[#max]與最小值[#min]相差180度以下的fail檢出，請開啟[GPRMC]*.csv檢查
+無filter fail的資料，其存成[GPGGA/GPRMC/PASCD].csv

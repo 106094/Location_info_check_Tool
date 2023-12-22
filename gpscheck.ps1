@@ -1,4 +1,4 @@
-﻿
+
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass -Force;
 Add-Type -AssemblyName System.Windows.Forms
 
@@ -18,8 +18,11 @@ $mainfilepathnew=$mainpath+$mainfilenew
 
 $csvraw=get-content $mainfilepath
 
-#$filmap="\\192.168.20.20\sto\EO\2_AutoTool\ALL\136.AppleCarPlay_Location_info_check_Tool\failmapping.csv"
-$filmap="$PSScriptRoot\failmapping.csv"
+$filmap="\\192.168.20.20\sto\EO\2_AutoTool\ALL\148.AppleCarPlay_Location_info_check_Tool\failmapping.csv"
+if(!(test-path $filmap)){
+  $filmap="$PSScriptRoot\failmapping.csv"
+}
+
 if(!(test-path $filmap)){
 [System.Windows.Forms.MessageBox]::Show($this,"no failmapping.csv file is found, please check")   
 exit
@@ -63,8 +66,7 @@ $addclo++
 
 $newlinetitle=$newline -join ","
 
-
-$csvrawnew=$csvraw|%{
+$csvrawnew=$csvraw|ForEach-Object{
 
 if($csvraw.indexof($_) -eq 0){
 $_=$newlinetitle
@@ -87,15 +89,14 @@ $csvcontent=import-csv $mainfilepathnew
 #>
 #endregion
 
-
-
 $mapcontent=import-csv $filmap -Encoding UTF8
 
 $GPS_info=@("GPGGA","GPRMC","PASCD")
 foreach($GPS_inf in $GPS_info){
   
- $gpsfail180=$false  
- $fail_map=$mapcontent|?{$_.type -match $GPS_inf}
+ $gpsfail180=$null
+ $gpgga_suffix=$null
+ $fail_map=$mapcontent|Where-Object{$_.gpstype -match $GPS_inf}
 
  $content_gp_fail=$null
  $passflag=$true
@@ -106,10 +107,8 @@ foreach($GPS_inf in $GPS_info){
  
  $filepath=$mainpath+$gpsfilename
 
-
  $gpscontent|export-csv -path  $filepath -NoTypeInformation
  $content_gps=import-csv $filepath
-
 
 #region "GPGGA"
 
@@ -121,7 +120,7 @@ GPGGA
 4. L欄, M欄 - 海拔高度單位需顯示為M - fail4
 5. E欄 - 緯度半球必須為N - fail5
 6. G欄 - 經度半球必須為E - fail6
-
+7. H欄 - 不能全部為6 或 6連續超過500次 - fail7
 #>
 
   if($GPS_inf -eq "GPGGA"){
@@ -129,20 +128,20 @@ GPGGA
   foreach($content_gp in $content_gps){
 
    $failno="fail1"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
-  $colall|%{
+  $colall|ForEach-Object{
   if(($content_gp.$_).length -eq 0){
   $content_gp.$failno=$content_gp.$_
     } 
   }
 
    $failno="fail2"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
-  $colall|%{
+  $colall|ForEach-Object{
 
    $valuedata=(($content_gp.$_).split("."))[1]
      
@@ -153,20 +152,20 @@ GPGGA
 
   
    $failno="fail3"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
-  $colall|%{
+  $colall|ForEach-Object{
     if($content_gp.$_ -eq 0){
     $content_gp.$failno=$content_gp.$_
   }
   }
 
    $failno="fail4"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
- $colall|%{
+ $colall|ForEach-Object{
 
   if(($content_gp.$_) -ne "M"){
   $lineher=$content_gp
@@ -178,10 +177,10 @@ GPGGA
 
   
    $failno="fail5"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
- $colall|%{
+ $colall|ForEach-Object{
   if(($content_gp.$_) -ne "N"){
     $content_gp.$failno=$content_gp.$_
   } 
@@ -189,17 +188,41 @@ GPGGA
 
  
    $failno="fail6"
-   $cols=($fail_map|?{$_.failno -eq $failno}).column
+   $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
- $colall|%{
+ $colall|ForEach-Object{
   if(($content_gp.$_) -ne "E"){
     $content_gp.$failno=$content_gp.$_
   } 
   }
-
  }
- 
+
+    $failno="fail7"
+    $cols=($fail_map|Where-Object{$_.failno -eq $failno}).column
+    $colall=$cols.ToCharArray()
+    ForEach($colall1 in $colall){
+      $indexnums=$content_gps.$colall1
+      $i=0
+      
+      ForEach ($indexnum in $indexnums){
+          if($indexnum -eq 6){
+            $i++
+          }
+          else{
+            $i=0
+          }
+
+      }
+      if($i -eq $indexnums.count){
+       $gpgga_suffix+="_all_H_is6"
+      }
+      if($i -gt 500){
+        $gpgga_suffix+="_H_is6_ove500"
+       }
+    }
+
+
    $content_gps|export-csv -path  $filepath -NoTypeInformation 
   $content_gp_fail= $content_gps|?{($_.fail1).length -gt 0 -or ($_.fail2).length -gt 0 -or ($_.fail3).length -gt 0 -or ($_.fail4).length -gt 0 -or ($_.fail5).length -gt 0 -or ($_.fail6).length -gt 0}
   }
@@ -305,7 +328,7 @@ GPRMC
    }  
 
   
-     $failno="fail7"
+   $failno="fail7"
    $cols=($fail_map|?{$_.failno -eq $failno}).column
    $colall=$cols.ToCharArray()
 
@@ -402,9 +425,13 @@ PASCD
    $failflag="fail"
   }
    
-   if($gpsfail180){
-   $failflag=$failflag+@("_less180_$($maxang)_$($minang)")
+   if($gpsfail180.lengh -gt 0){
+    $failflag=$failflag+$gpsfail180
    #$gpsfilename_fail=$mainfile.replace(".csv","_$($GPS_inf)_fail_less180_$($maxang)_$($minang).csv")
+   }
+
+   if($gpgga_suffix.length -gt 0){
+    $failflag=$failflag+$gpgga_suffix
    }
 
     $failflag= ($failflag|Out-String).Trim()
@@ -415,7 +442,7 @@ PASCD
  $filepath_fail=$mainpath+$gpsfilename_fail
   $filepath_pass=$mainpath+$gpsfilename_pass
 
-if((($content_gp_fail).A).count -gt 0 -or $gpsfail180 ){
+if((($content_gp_fail).A).count -gt 0 -or $gpsfail180.length -gt 0 -or $gpgga_suffix.length -gt 0 ){
 $filepathcsv=$filepath_fail
  $content_gp_fail | export-csv -path   $filepath_fail -NoTypeInformation
   }

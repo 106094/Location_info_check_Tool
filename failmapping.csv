@@ -1,0 +1,20 @@
+﻿gpstype,column,failno,failitem
+GPGGA,ABCDEFGHIJKLMNOP,fail1,全部欄位不能有空白
+GPGGA,DF,fail2,經緯度確認到小數點四位
+GPGGA,H,fail3,GPS狀態不可顯示為0
+GPGGA,LN,fail4,海拔高度單位需顯示為M
+GPGGA,E,fail5,緯度半球必須為N
+GPGGA,G,fail6,經度半球必須為E
+GPGGA,H,fail7,不能全部為6或6連續超過500次
+GPRMC,ABCDEFGHIJKN,fail1,全部欄位不能有空白
+GPRMC,D,fail2,定位狀態不能為V
+GPRMC,EG,fail3,經緯度確認到小數點四位
+GPRMC,J,fail4,地面航向最大值與最小值要相差180度以上
+GPRMC,N,fail5,模式指示不應為N開頭
+GPRMC,F,fail6,緯度半球必須為N
+GPRMC,H,fail7,經度半球必須為E
+GPRMC,I,trans1,時速
+PASCD,ABCDEFGHI,fail1,全部欄位不能有空白
+PASCD,D,fail2,Sensor Type此欄只能顯示為C
+PASCD,E,fail3,檔位狀態不能顯示為 U
+PASCD,I,trans1,時速
